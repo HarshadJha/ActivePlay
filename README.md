@@ -1,16 +1,49 @@
-# React + Vite
+# ActivePlay
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ActivePlay is an interactive fitness application that uses computer vision to turn physical exercise into engaging games. Built with React, Vite, and MediaPipe, it provides real-time body tracking directly in your browser.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Real-time Pose Detection**: Uses your webcam to track body movements without any extra hardware.
+- **Interactive Games**: A variety of mini-games designed to target specific muscle groups and improve coordination.
+- **Gamification**: Score points and track your progress as you exercise.
 
-## React Compiler
+## Available Games
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Air Drawing**: Use your hands to draw in the air.
+- **Happy Steps**: March in place to the beat.
+- **Overhead Reach Bubbles**: Reach up to pop bubbles and stretch your arms.
+- **Pose Match**: Match the on-screen poses to score points.
+- **Reach Hold**: Hold specific positions to test your endurance.
+- **Reaction Time Challenge**: Test your reflexes by hitting targets quickly.
+- **Side Lean Balance**: Improve your core strength and balance by leaning.
+- **Squats**: Perfect your squat form with real-time feedback.
+- **Step In Box**: Step accurately into virtual boxes on the floor.
+- **Virtual Drums**: Play virtual drums in the air for a cardio workout.
 
-## Expanding the ESLint configuration
+## Technical Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Frontend**: React + Vite
+- **Styling**: Tailwind CSS
+- **Computer Vision**: MediaPipe Pose
+- **Routing**: React Router
+
+## Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/HarshadJha/ActivePlay.git
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Open in Browser**
+   Navigate to `http://localhost:5173` to start playing!
