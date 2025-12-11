@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ActivePlay - AI Exercise Game</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+  <!-- Removed restrictive Permissions-Policy meta that can block camera access -->
+
+</head>
+<body>
+
+<h1>🎮 ActivePlay – AI Exercise Game for Seniors</h1>
+
+<div class="container">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+</div>
+
+<p>Raise your right hand to pop balloons!</p>
+<p id="score">Score: 0</p>
+
+<p id="status" aria-live="polite"></p>
+<p>
+  <button id="startButton">Start Camera</button>
+</p>
+
+<script src="script.js"></script>
+</body>
+</html>
