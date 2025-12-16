@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile      UserProfile?
+  gameSessions GameSession[]
+  stats        UserStats?
+  achievements Achievement[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  age                   Int?
+  mobilityStatus        String?  // 'seated', 'assisted', 'active'
+  goals                 String[] // ['balance', 'strength', 'cardio']
+  onboardingCompleted   Boolean  @default(false)
+  avatarUrl             String?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+model GameSession {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  gameType   String   // 'happySteps', 'squats', 'airDrawing', etc.
+  score      Int
+  duration   Int      // in seconds
+  accuracy   Float?   // percentage
+  metadata   Json?    // Additional game-specific data
+  
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("game_sessions")
+}
+
+model UserStats {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  totalGamesPlayed Int      @default(0)
+  totalPlayTime    Int      @default(0) // in seconds
+  favoriteGame     String?
+  currentStreak    Int      @default(0) // days
+  longestStreak    Int      @default(0) // days
+  lastPlayedAt     DateTime?
+  
+  updatedAt        DateTime @updatedAt
+
+  @@map("user_stats")
+}
+
+model Achievement {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  achievementType String   // 'first_game', 'games_10', 'streak_7', etc.
+  unlockedAt      DateTime @default(now())
+
+  @@unique([userId, achievementType])
+  @@map("achievements")
+}

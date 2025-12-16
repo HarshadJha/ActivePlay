@@ -1,48 +1,51 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { Camera } from '@mediapipe/camera_utils';
 import { poseService } from '../services/poseService';
 
 export const usePoseDetection = () => {
-    const videoRef = useRef(null);
-    const [results, setResults] = useState(null);
-    const cameraRef = useRef(null);
+  const videoRef = useRef(null);
+  const cameraRef = useRef(null);
+  const resultsRef = poseService.getResultsRef();
+  const startedRef = useRef(false);
 
-    useEffect(() => {
-        console.log("Initializing usePoseDetection");
-        const onResults = (res) => {
-            setResults(res);
-        };
+  const start = useCallback(() => {
+    if (startedRef.current) return;
+    if (!videoRef.current) return;
 
-        poseService.onResults(onResults);
+    cameraRef.current = new Camera(videoRef.current, {
+      onFrame: async () => {
+        await poseService.send(videoRef.current);
+      },
+      width: 1280,
+      height: 720,
+    });
 
-        if (videoRef.current) {
-            console.log("Video ref found, setting up Camera");
-            try {
-                cameraRef.current = new Camera(videoRef.current, {
-                    onFrame: async () => {
-                        await poseService.send(videoRef.current);
-                    },
-                    width: 1280,
-                    height: 720,
-                });
+    startedRef.current = true;
+    cameraRef.current.start().catch((err) => {
+      console.error("Camera start failed", err);
+      startedRef.current = false;
+    });
+  }, []);
 
-                cameraRef.current.start()
-                    .then(() => console.log("Camera started successfully"))
-                    .catch(err => console.error("Error starting camera:", err));
-            } catch (error) {
-                console.error("Error initializing Camera utility:", error);
-            }
-        } else {
-            console.warn("Video ref is null during initialization");
-        }
+  const stop = useCallback(() => {
+    if (cameraRef.current) {
+      cameraRef.current.stop();
+      cameraRef.current = null;
+    }
+    startedRef.current = false;
+  }, []);
 
-        return () => {
-            if (cameraRef.current) {
-                console.log("Stopping camera");
-                cameraRef.current.stop();
-            }
-        };
-    }, []);
+  const setFps = useCallback((fps) => {
+    poseService.setTargetFps(fps);
+  }, []);
 
-    return { videoRef, results };
+  useEffect(() => {
+    poseService.init();
+    return () => {
+      stop();
+      poseService.close();
+    };
+  }, [stop]);
+
+  return { videoRef, resultsRef, start, stop, setFps };
 };

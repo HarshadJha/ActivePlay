@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Camera from '../components/game/Camera';
 import GameRenderer from '../components/game/GameRenderer';
+import Calibration from '../components/game/Calibration';
 import { usePoseDetection } from '../hooks/usePoseDetection';
 import { useGameEngine } from '../hooks/useGameEngine';
-import { happySteps } from '../games/happySteps'; // Keep for fallback, or better, remove and handle null safely
+import { happySteps } from '../games/happySteps';
 import { Play, RotateCcw } from 'lucide-react';
 
 import { useParams, useNavigate } from 'react-router-dom';
@@ -21,35 +22,58 @@ const Game = () => {
         }
     }, [gameConfig, navigate]);
 
-    // We need access to results here to pass to the game engine
-    // But Camera component handles usePoseDetection internally.
-    // We should lift usePoseDetection up or expose a callback from Camera.
-    // For simplicity, let's use usePoseDetection here and pass videoRef/results to Camera (or just results).
-    // Actually, Camera is designed to be self-contained for display.
-    // Let's modify Camera to accept an onFrame callback or expose results via context/callback.
+    // Set higher FPS for smoother gameplay
+    const { videoRef, resultsRef, start, stop, setFps } = usePoseDetection();
+    const [calibrated, setCalibrated] = useState(false);
+    useEffect(() => { setFps(15); }, [setFps]);
 
-    // Better approach: Game page manages the "Brain" (usePoseDetection + useGameEngine), 
-    // and Camera is just the "Eyes" (Display).
+  const {
+      gameState,
+      score,
+      timeLeft,
+      feedback,
+      startGame,
+      renderDataRef,
+  } = useGameEngine(gameConfig || happySteps, resultsRef, (finalScore) => {
+      console.log("Game Over! Score:", finalScore);
+  });
 
-    const { videoRef, results } = usePoseDetection();
-
-    const {
-        gameState,
-        score,
-        timeLeft,
-        feedback,
-        internalGameState,
-        startGame,
-        processFrame
-    } = useGameEngine(gameConfig || happySteps, (finalScore) => { // Fallback to happySteps to prevent crash before redirect
-        console.log("Game Over! Score:", finalScore);
-    });
-
+    const gestureRafRef = useRef(null);
     useEffect(() => {
-        if (results && results.poseLandmarks) {
-            processFrame(results.poseLandmarks);
+        if (!calibrated || gameState !== 'intro') {
+            if (gestureRafRef.current) {
+                cancelAnimationFrame(gestureRafRef.current);
+                gestureRafRef.current = null;
+            }
+            return;
         }
-    }, [results, processFrame]);
+        const loop = () => {
+            const res = resultsRef.current;
+            if (res && res.poseLandmarks) {
+                const lm = res.poseLandmarks;
+                const lw = lm[15]; // LEFT_WRIST
+                const rw = lm[16]; // RIGHT_WRIST
+                const ls = lm[11]; // LEFT_SHOULDER
+                const rs = lm[12]; // RIGHT_SHOULDER
+                const visOk = [lw, rw, ls, rs].every(p => (p?.visibility ?? 0) > 0.5);
+                const handsUp = visOk && lw.y < ls.y && rw.y < rs.y;
+                if (handsUp) {
+                    startGame();
+                    cancelAnimationFrame(gestureRafRef.current);
+                    gestureRafRef.current = null;
+                    return;
+                }
+            }
+            gestureRafRef.current = requestAnimationFrame(loop);
+        };
+        gestureRafRef.current = requestAnimationFrame(loop);
+        return () => {
+            if (gestureRafRef.current) {
+                cancelAnimationFrame(gestureRafRef.current);
+                gestureRafRef.current = null;
+            }
+        };
+    }, [calibrated, gameState, startGame, resultsRef]);
 
     return (
         <div className="relative w-full max-w-6xl mx-auto p-4 flex flex-col items-center">
@@ -68,7 +92,7 @@ const Game = () => {
                     <div className="text-center">
                         <p className="text-sm text-gray-500 uppercase font-bold">Time</p>
                         <p className={`text-4xl font-black ${timeLeft < 10 ? 'text-red-500' : 'text-gray-800'}`}>
-                            {timeLeft}s
+                            {Math.ceil(timeLeft)}s
                         </p>
                     </div>
                 </div>
@@ -76,23 +100,20 @@ const Game = () => {
 
             {/* Game Area */}
             <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
-                {/* We need to pass videoRef to Camera or modify Camera to accept it. 
-            Let's modify Camera to take props. */}
-                <CameraExternalControl videoRef={videoRef} results={results} />
-
-                {/* Game-specific visual elements (bubbles, drums, targets, etc.) */}
-                {gameState === 'playing' && (
-                    <GameRenderer gameConfig={gameConfig} gameState={internalGameState} />
+                <Camera videoRef={videoRef} resultsRef={resultsRef} start={start} stop={stop} />
+                <GameRenderer gameId={gameConfig?.id} renderDataRef={renderDataRef} />
+                {!calibrated && (
+                  <Calibration resultsRef={resultsRef} onComplete={() => setCalibrated(true)} />
                 )}
 
                 {/* Overlays */}
-                {gameState === 'intro' && (
+                {calibrated && gameState === 'intro' && (
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-8 text-center backdrop-blur-sm z-10">
                         <h1 className="text-5xl font-bold mb-4">Ready to Move?</h1>
                         <p className="text-xl mb-8 max-w-md">{gameConfig?.instructions}</p>
                         <button
                             onClick={startGame}
-                            className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-2xl font-bold flex items-center space-x-2 transition-transform hover:scale-105"
+                            className="px-10 py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-3xl font-bold flex items-center space-x-3 transition-transform hover:scale-105"
                         >
                             <Play className="w-8 h-8" />
                             <span>Start Game</span>
@@ -116,7 +137,7 @@ const Game = () => {
 
                 {/* Feedback Overlay (In-Game) */}
                 {gameState === 'playing' && feedback && (
-                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/50 px-6 py-2 rounded-full backdrop-blur-md z-20">
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/50 px-6 py-2 rounded-full backdrop-blur-md">
                         <p className="text-2xl font-bold text-white animate-bounce">{feedback}</p>
                     </div>
                 )}
@@ -124,71 +145,4 @@ const Game = () => {
         </div>
     );
 };
-
-// Modified Camera component that accepts refs/results from parent
-// We'll define it here for now or update the original file. 
-// Let's update the original file to be flexible.
-// For this step, I'll inline a wrapper or just import the original and modify it in next step.
-// Actually, I can't pass refs to the existing Camera component easily if it creates its own.
-// I will modify the existing Camera component to be "dumb" if props are provided.
-
-import { useRef } from 'react';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
-import { POSE_CONNECTIONS } from '@mediapipe/pose';
-
-const CameraExternalControl = ({ videoRef, results }) => {
-    const canvasRef = useRef(null);
-
-    useEffect(() => {
-        if (!results || !canvasRef.current || !videoRef.current) return;
-
-        const canvasCtx = canvasRef.current.getContext('2d');
-        const { width, height } = canvasRef.current;
-
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, width, height);
-
-        // Mirror horizontally
-        canvasCtx.translate(width, 0);
-        canvasCtx.scale(-1, 1);
-
-        // Draw video frame (mirrored)
-        canvasCtx.drawImage(results.image, 0, 0, width, height);
-
-        // Draw skeleton (mirrored)
-        if (results.poseLandmarks) {
-            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-                color: '#00FF00',
-                lineWidth: 4,
-            });
-            drawLandmarks(canvasCtx, results.poseLandmarks, {
-                color: '#FF0000',
-                lineWidth: 2,
-            });
-        }
-        canvasCtx.restore();
-    }, [results, videoRef]);
-
-    return (
-        <>
-            <video
-                ref={videoRef}
-                className="absolute top-0 left-0 w-full h-full object-cover opacity-0"
-                playsInline
-            />
-            <canvas
-                ref={canvasRef}
-                width={1280}
-                height={720}
-                className="absolute top-0 left-0 w-full h-full object-contain"
-            />
-            {!results && (
-                <div className="absolute inset-0 flex items-center justify-center text-white z-0">
-                    <p className="text-xl animate-pulse">Initializing Camera & AI...</p>
-                </div>
-            )}
-        </>
-    );
-};
-
 export default Game;

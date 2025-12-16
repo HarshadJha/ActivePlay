@@ -16,6 +16,7 @@ export const airDrawing = {
         gameStartTime: null,
         drawingPath: [],
         shapeProgress: 0,
+        bestShapeProgress: 0,
         perfectShapes: 0,
         currentHand: 'right', // Which hand to use
     },
@@ -118,22 +119,25 @@ export const airDrawing = {
                 time: currentTime,
             });
 
-            // Keep only recent points (last 3 seconds)
+            // Keep only recent points (last 5 seconds) so progress does not vanish too quickly
             drawingPath = drawingPath.filter(point =>
-                currentTime - point.time < 3000
+                currentTime - point.time < 5000
             );
         } else {
-            // Hand lowered, clear path
-            if (drawingPath.length > 0) {
-                drawingPath = [];
-            }
+            // Hand lowered: keep the existing path so progress feels stable (no hard reset)
         }
 
-        // Check shape completion
-        let shapeProgress = 0;
+        // Check shape completion with "sticky" progress (never drop sharply)
+        let shapeProgress = state.shapeProgress || 0;
+        let bestShapeProgress = state.bestShapeProgress || shapeProgress;
         if (drawingPath.length > 10) {
             const completion = currentShape.checkCompletion(drawingPath);
-            shapeProgress = completion.progress;
+            const currentProgress = completion.progress;
+            // Only allow progress to go up, not down, within a shape
+            if (currentProgress > bestShapeProgress) {
+                bestShapeProgress = currentProgress;
+            }
+            shapeProgress = bestShapeProgress;
         }
 
         let scoreIncrement = 0;
@@ -172,6 +176,7 @@ export const airDrawing = {
             shapeStartTime = currentTime;
             drawingPath = [];
             shapeProgress = 0;
+            bestShapeProgress = 0;
             currentHand = currentHand === 'right' ? 'left' : 'right';
         } else {
             // Provide feedback on progress
@@ -200,6 +205,7 @@ export const airDrawing = {
             gameStartTime,
             drawingPath,
             shapeProgress,
+            bestShapeProgress,
             perfectShapes,
             currentHand,
             shapeCompleted: shapeProgress >= 100,
@@ -227,25 +233,34 @@ export const airDrawing = {
 // Helper functions to check shape completion
 function checkCircle(path) {
     if (path.length < 20) return { progress: 0 };
+    // Slight smoothing to tolerate jitter: sample every few points
+    const sampled = [];
+    const step = Math.max(1, Math.floor(path.length / 40));
+    for (let i = 0; i < path.length; i += step) {
+        sampled.push(path[i]);
+    }
 
     // Calculate center of path
-    const centerX = path.reduce((sum, p) => sum + p.x, 0) / path.length;
-    const centerY = path.reduce((sum, p) => sum + p.y, 0) / path.length;
+    const centerX = sampled.reduce((sum, p) => sum + p.x, 0) / sampled.length;
+    const centerY = sampled.reduce((sum, p) => sum + p.y, 0) / sampled.length;
 
     // Calculate average radius
-    const avgRadius = path.reduce((sum, p) => {
-        return sum + Math.sqrt(Math.pow(p.x - centerX, 2) + Math.pow(p.y - centerY, 2));
-    }, 0) / path.length;
+    const radii = sampled.map((p) =>
+        Math.sqrt(Math.pow(p.x - centerX, 2) + Math.pow(p.y - centerY, 2))
+    );
+    const avgRadius = radii.reduce((sum, r) => sum + r, 0) / radii.length;
 
     // Check if points are roughly equidistant from center
-    const radiusVariance = path.reduce((sum, p) => {
-        const radius = Math.sqrt(Math.pow(p.x - centerX, 2) + Math.pow(p.y - centerY, 2));
-        return sum + Math.abs(radius - avgRadius);
-    }, 0) / path.length;
+    const radiusAbsDev =
+        radii.reduce((sum, r) => sum + Math.abs(r - avgRadius), 0) / radii.length;
 
-    // Lower variance = better circle
-    const progress = Math.max(0, 100 - (radiusVariance * 1000));
-    return { progress: Math.min(progress, 100) };
+    // Normalize deviation by radius so large circles are not over‑penalized
+    const normalizedDev = avgRadius > 0 ? radiusAbsDev / avgRadius : radiusAbsDev;
+
+    // Lower deviation = better circle. Be forgiving: small wobble still gives high progress.
+    let progress = 100 - normalizedDev * 250; // previously much harsher
+    progress = Math.max(0, Math.min(100, progress));
+    return { progress };
 }
 
 function checkHorizontalLine(path) {
@@ -259,8 +274,10 @@ function checkHorizontalLine(path) {
     const avgY = path.reduce((sum, p) => sum + p.y, 0) / path.length;
     const yVariance = path.reduce((sum, p) => sum + Math.abs(p.y - avgY), 0) / path.length;
 
-    const progress = Math.min((distance * 500) - (yVariance * 1000), 100);
-    return { progress: Math.max(0, progress) };
+    // Be more tolerant of small vertical wiggles while still rewarding long lines
+    let progress = distance * 600 - yVariance * 400;
+    progress = Math.max(0, Math.min(100, progress));
+    return { progress };
 }
 
 function checkVerticalLine(path) {
@@ -274,8 +291,10 @@ function checkVerticalLine(path) {
     const avgX = path.reduce((sum, p) => sum + p.x, 0) / path.length;
     const xVariance = path.reduce((sum, p) => sum + Math.abs(p.x - avgX), 0) / path.length;
 
-    const progress = Math.min((distance * 500) - (xVariance * 1000), 100);
-    return { progress: Math.max(0, progress) };
+    // Be more tolerant of small horizontal wiggles while still rewarding long lines
+    let progress = distance * 600 - xVariance * 400;
+    progress = Math.max(0, Math.min(100, progress));
+    return { progress };
 }
 
 function checkSquare(path) {

@@ -51,7 +51,7 @@ export const overheadReachBubbles = {
                 id: Math.random(),
                 x: 0.2 + Math.random() * 0.6, // Random x between 0.2 and 0.8
                 y: 0.15 + Math.random() * 0.35, // Random y between 0.15 and 0.5 (upper half)
-                radius: 0.06 + Math.random() * 0.03, // Random size
+                radius: 0.06 + Math.random() * 0.02, // Random size
                 floatSpeed: 0.0005 + Math.random() * 0.0005, // Slow upward float
                 spawnTime: currentTime,
                 color: Math.floor(Math.random() * 5), // 0-4 for different colors
@@ -68,7 +68,7 @@ export const overheadReachBubbles = {
         // Remove bubbles that floated off screen or are too old
         bubbles = bubbles.filter(bubble => {
             const bubbleAge = (currentTime - bubble.spawnTime) / 1000;
-            return bubble.y > -0.1 && bubbleAge < 20; // Remove if off screen or older than 20s
+            return bubble.y > -0.1 && bubbleAge < 7; // Remove if off screen or older than 7s
         });
 
         // Check if hands are touching bubbles
@@ -109,7 +109,7 @@ export const overheadReachBubbles = {
                 combo++;
 
                 // Score based on bubble size (smaller = harder = more points)
-                const basePoints = Math.floor(15 / bubble.radius);
+                const basePoints = Math.floor(20/ bubble.radius);
                 const comboBonus = Math.min(combo * 2, 20);
                 scoreIncrement += basePoints + comboBonus;
 

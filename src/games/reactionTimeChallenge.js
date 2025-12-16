@@ -42,7 +42,6 @@ export const reactionTimeChallenge = {
         // Initialize game start time
         const currentTime = Date.now();
         const gameStartTime = state.gameStartTime || currentTime;
-        const timeSinceStart = currentTime - gameStartTime;
 
         let currentTarget = state.currentTarget;
         let targetSpawnTime = state.targetSpawnTime;

@@ -68,7 +68,7 @@ export const virtualDrums = {
         }
 
         const drumPads = state.drumPads;
-        const HAND_RADIUS = 0.06;
+        const HAND_RADIUS = 0.08; // slightly larger for more forgiving hits
         const HIT_COOLDOWN = 300; // ms between hits on same pad
 
         let scoreIncrement = 0;
@@ -79,12 +79,15 @@ export const virtualDrums = {
         let sequenceScore = state.sequenceScore || 0;
         let hitAnimations = [...(state.hitAnimations || [])];
 
-        // Detect downward hand motion (hitting motion)
-        const leftHandVelocity = leftWrist.y - (leftElbow.y - 0.1); // Approximate velocity
-        const rightHandVelocity = rightWrist.y - (rightElbow.y - 0.1);
+        // Detect downward hand motion (hitting motion) using frame-to-frame velocity
+        const prevLeftY = state.prevLeftWristY ?? leftWrist.y;
+        const prevRightY = state.prevRightWristY ?? rightWrist.y;
+        const leftHandVelocity = leftWrist.y - prevLeftY;
+        const rightHandVelocity = rightWrist.y - prevRightY;
 
-        const isLeftHandHitting = leftHandVelocity > 0; // Moving down
-        const isRightHandHitting = rightHandVelocity > 0; // Moving down
+        const HIT_VELOCITY_THRESHOLD = 0.015; // require a noticeable downward motion
+        const isLeftHandHitting = leftHandVelocity > HIT_VELOCITY_THRESHOLD;
+        const isRightHandHitting = rightHandVelocity > HIT_VELOCITY_THRESHOLD;
 
         // Check each drum pad for hits
         drumPads.forEach(pad => {
@@ -203,6 +206,9 @@ export const virtualDrums = {
             sequenceScore,
             hitAnimations,
             rhythmConsistency,
+            // store for next-frame velocity calculation
+            prevLeftWristY: leftWrist.y,
+            prevRightWristY: rightWrist.y,
             leftWristPos: { x: leftWrist.x, y: leftWrist.y }, // For rendering
             rightWristPos: { x: rightWrist.x, y: rightWrist.y }, // For rendering
             scoreDelta: scoreIncrement,
