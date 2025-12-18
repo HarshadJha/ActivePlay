@@ -15,7 +15,6 @@ ActivePlay is an interactive web-based fitness application that transforms physi
 
 | Game | Description | Focus Area |
 | :--- | :--- | :--- |
-| **Air Drawing** | Unleash your creativity by drawing in the air with your hands. | Coordination |
 | **Happy Steps** | March in place to maintain a rhythm and keep your energy up! | Cardio, Legs |
 | **Overhead Reach Bubbles** | Reach high to pop bubbles floating above you. | Shoulders, Stretching |
 | **Pose Match** | Mimic the on-screen poses as quickly and accurately as possible. | Flexibility, Coordination |
