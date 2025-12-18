@@ -13,6 +13,7 @@
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/pose": "^0.5.1675469404",
+    "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",

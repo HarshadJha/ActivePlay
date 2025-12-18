@@ -1,11 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { smoothLandmarks } from '../utils/poseUtils';
+import gameService from '../services/gameService';
+import { useAuth } from '../context/useAuth';
 
 export const useGameEngine = (gameLogic, resultsRef, onGameOver) => {
+  const { isAuthenticated } = useAuth();
+
   const [gameState, setGameState] = useState('intro');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(gameLogic.duration);
   const [feedback, setFeedback] = useState(gameLogic.initialState.feedback);
+  const [gameStartTime, setGameStartTime] = useState(null);
+  const [sessionSaved, setSessionSaved] = useState(false);
+
 
   // Refs to hold latest state for the game loop (avoids stale closures)
   const gameStateRef = useRef(gameState);
@@ -64,15 +71,46 @@ export const useGameEngine = (gameLogic, resultsRef, onGameOver) => {
   }, [gameLogic.id, gameLogic.duration, gameLogic.initialState]);
 
 
-  const endGame = useCallback(() => {
+  const endGame = useCallback(async () => {
+    // Prevent duplicate calls
+    if (gameStateRef.current === 'finished') {
+      return;
+    }
+
     setGameState('finished');
     gameStateRef.current = 'finished'; // Update ref immediately
+
+    // Calculate actual game duration (time played, not elapsed time)
+    const actualDuration = gameLogicRef.current.duration - Math.floor(timeLeft);
+
+    // Save session to backend if authenticated and not already saved
+    if (isAuthenticated && gameLogicRef.current && !sessionSaved) {
+      setSessionSaved(true);
+      try {
+        await gameService.saveSession({
+          gameType: gameLogicRef.current.id,
+          score: scoreRef.current,
+          duration: actualDuration > 0 ? actualDuration : gameLogicRef.current.duration,
+          accuracy: internalStateRef.current.accuracy || null,
+          metadata: {
+            feedback: feedbackRef.current,
+            ...internalStateRef.current.metadata
+          }
+        });
+        console.log('Game session saved successfully');
+      } catch (error) {
+        console.error('Failed to save game session:', error);
+        setSessionSaved(false); // Allow retry on error
+        // Continue with game end even if save fails
+      }
+    }
+
     if (onGameOverRef.current) onGameOverRef.current(scoreRef.current);
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-  }, []);
+  }, [isAuthenticated, sessionSaved, timeLeft]);
 
   useEffect(() => {
     loopRef.current = (now) => {
@@ -129,6 +167,8 @@ export const useGameEngine = (gameLogic, resultsRef, onGameOver) => {
 
     setScore(0);
     scoreRef.current = 0;
+    setGameStartTime(Date.now()); // Track game start time
+    setSessionSaved(false); // Reset session saved flag
 
     setTimeLeft(gameLogicRef.current.duration);
     internalStateRef.current = gameLogicRef.current.initialState;
