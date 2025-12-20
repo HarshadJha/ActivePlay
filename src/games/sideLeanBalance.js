@@ -5,6 +5,7 @@ export const sideLeanBalance = {
     name: 'Side Lean Balance',
     instructions: 'Lean left and right to move the ball and collect coins! Great for core balance.',
     duration: 60, // seconds
+    calibrationType: 'upper_body',
 
     // State specific to this game
     initialState: {
@@ -119,7 +120,7 @@ export const sideLeanBalance = {
                 // Coin collected!
                 scoreIncrement += 20;
                 coinsCollected++;
-                newFeedback = `Coin collected! +20`;
+                newFeedback = `Coin collected! + 20`;
                 return false; // Remove coin
             }
 

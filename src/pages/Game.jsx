@@ -27,16 +27,16 @@ const Game = () => {
     const [calibrated, setCalibrated] = useState(false);
     useEffect(() => { setFps(15); }, [setFps]);
 
-  const {
-      gameState,
-      score,
-      timeLeft,
-      feedback,
-      startGame,
-      renderDataRef,
-  } = useGameEngine(gameConfig || happySteps, resultsRef, (finalScore) => {
-      console.log("Game Over! Score:", finalScore);
-  });
+    const {
+        gameState,
+        score,
+        timeLeft,
+        feedback,
+        startGame,
+        renderDataRef,
+    } = useGameEngine(gameConfig || happySteps, resultsRef, (finalScore) => {
+        console.log("Game Over! Score:", finalScore);
+    });
 
     const gestureRafRef = useRef(null);
     useEffect(() => {
@@ -103,7 +103,11 @@ const Game = () => {
                 <Camera videoRef={videoRef} resultsRef={resultsRef} start={start} stop={stop} />
                 <GameRenderer gameId={gameConfig?.id} renderDataRef={renderDataRef} />
                 {!calibrated && (
-                  <Calibration resultsRef={resultsRef} onComplete={() => setCalibrated(true)} />
+                    <Calibration
+                        resultsRef={resultsRef}
+                        onComplete={() => setCalibrated(true)}
+                        calibrationType={gameConfig?.calibrationType}
+                    />
                 )}
 
                 {/* Overlays */}

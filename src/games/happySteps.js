@@ -5,6 +5,7 @@ export const happySteps = {
     name: 'Happy Steps',
     instructions: 'March in place! Lift your knees high.',
     duration: 60, // seconds
+    calibrationType: 'full_body',
 
     // State specific to this game
     initialState: {

@@ -3,8 +3,9 @@ import { POSE_LANDMARKS } from '@mediapipe/pose';
 export const virtualDrums = {
     id: 'virtual_drums',
     name: 'Virtual Drums',
-    instructions: 'Hit the drum pads with your hands! Follow the rhythm and make music!',
-    duration: 60, // seconds
+    instructions: 'Hit the virtual drums in the air to the rhythm!',
+    duration: 45, // seconds
+    calibrationType: 'upper_body',
 
     // State specific to this game
     initialState: {

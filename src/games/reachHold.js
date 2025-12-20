@@ -5,6 +5,7 @@ export const reachHold = {
     name: 'Reach & Hold',
     instructions: 'Raise your arms above your shoulders and hold steady. Great for balance and flexibility!',
     duration: 60, // seconds
+    calibrationType: 'upper_body',
 
     // State specific to this game
     initialState: {

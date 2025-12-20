@@ -5,6 +5,7 @@ export const poseMatch = {
     name: 'Pose Match',
     instructions: 'Match the pose shown on screen! Great for full body flexibility.',
     duration: 60, // seconds
+    calibrationType: 'full_body',
 
     // State specific to this game
     initialState: {

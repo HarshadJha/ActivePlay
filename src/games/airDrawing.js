@@ -5,6 +5,7 @@ export const airDrawing = {
     name: 'Air Drawing',
     instructions: 'Draw shapes in the air with your hand! Great for fine motor control.',
     duration: 60, // seconds
+    calibrationType: 'hands_only',
 
     // State specific to this game
     initialState: {

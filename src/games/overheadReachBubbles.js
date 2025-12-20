@@ -5,6 +5,7 @@ export const overheadReachBubbles = {
     name: 'Overhead Reach Bubbles',
     instructions: 'Reach up and pop the floating bubbles! Great for shoulder mobility.',
     duration: 60, // seconds
+    calibrationType: 'hands_only',
 
     // State specific to this game
     initialState: {
@@ -109,7 +110,7 @@ export const overheadReachBubbles = {
                 combo++;
 
                 // Score based on bubble size (smaller = harder = more points)
-                const basePoints = Math.floor(20/ bubble.radius);
+                const basePoints = Math.floor(20 / bubble.radius);
                 const comboBonus = Math.min(combo * 2, 20);
                 scoreIncrement += basePoints + comboBonus;
 

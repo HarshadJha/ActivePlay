@@ -5,6 +5,7 @@ export const stepInBox = {
     name: 'Step-In-Box',
     instructions: 'Step or lean in the direction shown! Great for coordination and leg strength.',
     duration: 60, // seconds
+    calibrationType: 'full_body',
 
     // State specific to this game
     initialState: {

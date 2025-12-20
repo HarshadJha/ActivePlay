@@ -5,6 +5,7 @@ export const reactionTimeChallenge = {
     name: 'Reaction Time Challenge',
     instructions: 'Touch the targets as fast as you can! Improves hand-eye coordination.',
     duration: 60, // seconds
+    calibrationType: 'hands_only',
 
     // State specific to this game
     initialState: {

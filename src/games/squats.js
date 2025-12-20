@@ -5,6 +5,7 @@ export const squats = {
     name: 'Squat Master',
     instructions: 'Stand with feet shoulder-width apart. Squat down until your hips are below your knees, then stand back up.',
     duration: 60, // seconds
+    calibrationType: 'full_body',
 
     // State specific to this game
     initialState: {
