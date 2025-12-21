@@ -70,8 +70,9 @@ const authService = {
     async getCurrentUser() {
         const response = await api.get('/api/auth/me');
 
-        if (response.data) {
-            localStorage.setItem('activeplay_user', JSON.stringify(response.data));
+        if (response.data && response.data.user) {
+            localStorage.setItem('activeplay_user', JSON.stringify(response.data.user));
+            return response.data.user;
         }
 
         return response.data;

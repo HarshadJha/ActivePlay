@@ -41,7 +41,7 @@ export const virtualDrums = {
         const rightElbow = landmarks[POSE_LANDMARKS.RIGHT_ELBOW];
 
         // Visibility check
-        const minVisibility = 0.5;
+        const minVisibility = 0.4;
         if (leftWrist.visibility < minVisibility || rightWrist.visibility < minVisibility) {
             return { ...state, feedback: 'Make sure your hands are visible!', scoreDelta: 0 };
         }

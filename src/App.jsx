@@ -11,37 +11,40 @@ import Stats from './pages/Stats';
 
 import { UserProvider } from './context/UserContext';
 import { AuthProvider } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
   return (
     <AuthProvider>
       <UserProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Home />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-            </Route>
+        <SettingsProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Home />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+              </Route>
 
-            {/* Protected Routes */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="onboarding" element={<Onboarding />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="stats" element={<Stats />} />
-              <Route path="game/:gameId" element={<Game />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+              {/* Protected Routes */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="onboarding" element={<Onboarding />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="stats" element={<Stats />} />
+                <Route path="game/:gameId" element={<Game />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </SettingsProvider>
       </UserProvider>
     </AuthProvider>
   );

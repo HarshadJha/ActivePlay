@@ -28,7 +28,7 @@ export const happySteps = {
         const rightKnee = landmarks[POSE_LANDMARKS.RIGHT_KNEE];
 
         // Visibility check
-        const minVisibility = 0.5;
+        const minVisibility = 0.4;
         if (leftHip.visibility < minVisibility || rightHip.visibility < minVisibility ||
             leftKnee.visibility < minVisibility || rightKnee.visibility < minVisibility) {
             return { ...state, feedback: 'Make sure your full body is visible!', scoreDelta: 0 };

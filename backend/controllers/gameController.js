@@ -185,13 +185,38 @@ async function updateUserStats(userId, gameType, duration) {
         where: { userId },
     });
 
+    const now = new Date();
+    const lastPlayed = stats.lastPlayedAt ? new Date(stats.lastPlayedAt) : null;
+    let currentStreak = stats.currentStreak || 0;
+
+    if (lastPlayed) {
+        // Strip time part to compare dates
+        const today = new Date(now).setHours(0, 0, 0, 0);
+        const last = new Date(lastPlayed).setHours(0, 0, 0, 0);
+        const diffTime = Math.abs(today - last);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+            currentStreak += 1; // Consecutive day
+        } else if (diffDays > 1) {
+            currentStreak = 1; // Streak broken
+        }
+        // If 0, played same day, maintain streak
+    } else {
+        currentStreak = 1; // First game
+    }
+
+    const bestStreak = Math.max(stats.bestStreak || 0, currentStreak);
+
     await prisma.userStats.update({
         where: { userId },
         data: {
             totalGamesPlayed: stats.totalGamesPlayed + 1,
             totalPlayTime: stats.totalPlayTime + duration,
-            lastPlayedAt: new Date(),
-            favoriteGame: gameType, // Simple logic - can be improved
+            lastPlayedAt: now,
+            currentStreak,
+            bestStreak,
+            favoriteGame: gameType,
         },
     });
 

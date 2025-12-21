@@ -14,6 +14,7 @@ const Calibration = ({ resultsRef, onComplete, calibrationType = CALIBRATION_TYP
   useEffect(() => {
     let calibrationFrames = 0;
     const REQUIRED_FRAMES = 15; // Reduced from 30 for faster calibration (~0.5s)
+    let buttonLockedUntil = 0; // Timestamp when button lock expires
 
     function loop() {
       const res = resultsRef.current;
@@ -30,21 +31,30 @@ const Calibration = ({ resultsRef, onComplete, calibrationType = CALIBRATION_TYP
       }
 
       const isStable = calibrationFrames >= REQUIRED_FRAMES;
-      passedRef.current = isStable;
+
+      // Lock the button for 10 seconds and refresh timer while calibration passes
+      const now = Date.now();
+      if (isStable) {
+        buttonLockedUntil = now + 10000; // Lock for 10 seconds, refreshes continuously
+      }
+
+      // Button stays enabled if locked, even if user moves
+      const buttonEnabled = isStable || (buttonLockedUntil > 0 && now < buttonLockedUntil);
+      passedRef.current = buttonEnabled;
 
       if (textRef.current) {
         textRef.current.textContent = isStable
           ? 'Perfect! You are ready.'
-          : status.message;
+          : (buttonEnabled ? 'Ready! Click Continue.' : status.message);
 
         // Visual feedback color
-        textRef.current.className = `text-lg mb-6 font-medium ${status.ok ? 'text-green-400' : 'text-white'}`;
+        textRef.current.className = `text-lg mb-6 font-medium ${(status.ok || buttonEnabled) ? 'text-green-400' : 'text-white'}`;
       }
 
       if (btnRef.current) {
-        btnRef.current.disabled = !isStable;
+        btnRef.current.disabled = !buttonEnabled;
         // Pulse effect on button when ready
-        if (isStable) {
+        if (buttonEnabled) {
           btnRef.current.classList.add('animate-pulse', 'ring-4', 'ring-green-500/50');
         } else {
           btnRef.current.classList.remove('animate-pulse', 'ring-4', 'ring-green-500/50');

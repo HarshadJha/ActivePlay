@@ -41,7 +41,7 @@ export const CALIBRATION_CONFIG = {
     },
     [CALIBRATION_TYPES.FULL_BODY]: {
         title: 'Full Body Calibration',
-        instructions: 'Step back until your whole body (feet to head) is visible.',
+        instructions: 'Step back so your shoulders, hips, and knees are visible.',
         requiredLandmarks: [
             POSE_LANDMARKS.LEFT_SHOULDER,
             POSE_LANDMARKS.RIGHT_SHOULDER,
@@ -49,8 +49,7 @@ export const CALIBRATION_CONFIG = {
             POSE_LANDMARKS.RIGHT_HIP,
             POSE_LANDMARKS.LEFT_KNEE,
             POSE_LANDMARKS.RIGHT_KNEE,
-            POSE_LANDMARKS.LEFT_ANKLE,
-            POSE_LANDMARKS.RIGHT_ANKLE,
+            // Removed ankles - too strict for most webcam setups
         ],
         checkCentering: (landmarks) => {
             const ls = landmarks[POSE_LANDMARKS.LEFT_SHOULDER];
@@ -66,10 +65,10 @@ export const checkCalibration = (landmarks, type = CALIBRATION_TYPES.FULL_BODY) 
 
     const config = CALIBRATION_CONFIG[type] || CALIBRATION_CONFIG[CALIBRATION_TYPES.FULL_BODY];
 
-    // Check visibility of required landmarks
+    // Check visibility of required landmarks (more lenient threshold)
     const missingLandmarks = config.requiredLandmarks.filter(index => {
         const lm = landmarks[index];
-        return !lm || (lm.visibility < 0.5);
+        return !lm || (lm.visibility < 0.4); // Reduced from 0.5 for more forgiving detection
     });
 
     if (missingLandmarks.length > 0) {

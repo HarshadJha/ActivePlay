@@ -5,7 +5,9 @@ import Calibration from '../components/game/Calibration';
 import { usePoseDetection } from '../hooks/usePoseDetection';
 import { useGameEngine } from '../hooks/useGameEngine';
 import { happySteps } from '../games/happySteps';
-import { Play, RotateCcw } from 'lucide-react';
+import { Play, RotateCcw, Settings } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
+import SettingsModal from '../components/common/SettingsModal';
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { games } from '../games';
@@ -22,10 +24,22 @@ const Game = () => {
         }
     }, [gameConfig, navigate]);
 
-    // Set higher FPS for smoother gameplay
-    const { videoRef, resultsRef, start, stop, setFps } = usePoseDetection();
+
+    // Settings and Performance
+    const { settings } = useSettings();
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // Initialize pose detection with selected quality
+    const { videoRef, resultsRef, start, stop, setFps } = usePoseDetection(settings.videoQuality);
+
+    // Optimize FPS based on quality setting
+    useEffect(() => {
+        // Lower resolution (low/medium) allows for higher FPS processing
+        const targetFps = settings.videoQuality === 'high' ? 15 : (settings.videoQuality === 'medium' ? 20 : 25);
+        setFps(targetFps);
+    }, [setFps, settings.videoQuality]);
+
     const [calibrated, setCalibrated] = useState(false);
-    useEffect(() => { setFps(15); }, [setFps]);
 
     const {
         gameState,
@@ -84,19 +98,31 @@ const Game = () => {
                     <h2 className="text-2xl font-bold text-gray-800">{gameConfig?.name}</h2>
                     <p className="text-gray-500 text-sm">{gameConfig?.instructions}</p>
                 </div>
-                <div className="flex space-x-8">
-                    <div className="text-center">
-                        <p className="text-sm text-gray-500 uppercase font-bold">Score</p>
-                        <p className="text-4xl font-black text-blue-600">{score}</p>
+                <div className="flex items-center space-x-4">
+                    <div className="flex space-x-8">
+                        <div className="text-center">
+                            <p className="text-sm text-gray-500 uppercase font-bold">Score</p>
+                            <p className="text-4xl font-black text-blue-600">{score}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-gray-500 uppercase font-bold">Time</p>
+                            <p className={`text-4xl font-black ${timeLeft < 10 ? 'text-red-500' : 'text-gray-800'}`}>
+                                {Math.ceil(timeLeft)}s
+                            </p>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <p className="text-sm text-gray-500 uppercase font-bold">Time</p>
-                        <p className={`text-4xl font-black ${timeLeft < 10 ? 'text-red-500' : 'text-gray-800'}`}>
-                            {Math.ceil(timeLeft)}s
-                        </p>
-                    </div>
+
+                    {/* Settings Button */}
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                    >
+                        <Settings className="w-6 h-6 text-gray-700" />
+                    </button>
                 </div>
             </div>
+
+            <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
             {/* Game Area */}
             <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
@@ -146,7 +172,7 @@ const Game = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 export default Game;

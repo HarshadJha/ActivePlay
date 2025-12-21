@@ -34,7 +34,7 @@ export const squats = {
         const leftLegVisibility = (leftHip.visibility + leftKnee.visibility + leftAnkle.visibility) / 3;
         const rightLegVisibility = (rightHip.visibility + rightKnee.visibility + rightAnkle.visibility) / 3;
 
-        const minVisibilityThreshold = 0.5;
+        const minVisibilityThreshold = 0.4; // Matches lenient calibration
 
         // If neither leg is clearly visible, return warning
         // Ensure to return scoreDelta: 0

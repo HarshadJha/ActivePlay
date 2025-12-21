@@ -32,7 +32,7 @@ export const reachHold = {
         const rightWrist = landmarks[POSE_LANDMARKS.RIGHT_WRIST];
 
         // Visibility check
-        const minVisibility = 0.5;
+        const minVisibility = 0.4;
         if (leftShoulder.visibility < minVisibility || rightShoulder.visibility < minVisibility ||
             leftElbow.visibility < minVisibility || rightElbow.visibility < minVisibility ||
             leftWrist.visibility < minVisibility || rightWrist.visibility < minVisibility) {

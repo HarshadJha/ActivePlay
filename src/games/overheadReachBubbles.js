@@ -31,7 +31,7 @@ export const overheadReachBubbles = {
         const rightWrist = landmarks[POSE_LANDMARKS.RIGHT_WRIST];
 
         // Visibility check
-        const minVisibility = 0.5;
+        const minVisibility = 0.4;
         if (leftShoulder.visibility < minVisibility || rightShoulder.visibility < minVisibility ||
             leftWrist.visibility < minVisibility || rightWrist.visibility < minVisibility) {
             return { ...state, feedback: 'Make sure your arms are visible!', scoreDelta: 0 };

@@ -36,7 +36,7 @@ export const poseMatch = {
         const rightHip = landmarks[POSE_LANDMARKS.RIGHT_HIP];
 
         // Visibility check
-        const minVisibility = 0.5;
+        const minVisibility = 0.4;
         const allVisible = [leftShoulder, rightShoulder, leftElbow, rightElbow,
             leftWrist, rightWrist, leftHip, rightHip]
             .every(landmark => landmark.visibility >= minVisibility);

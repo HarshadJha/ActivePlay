@@ -35,7 +35,7 @@ export const reactionTimeChallenge = {
         const rightShoulder = landmarks[POSE_LANDMARKS.RIGHT_SHOULDER];
 
         // Visibility check
-        const minVisibility = 0.5;
+        const minVisibility = 0.4;
         if (leftWrist.visibility < minVisibility || rightWrist.visibility < minVisibility) {
             return { ...state, feedback: 'Make sure your hands are visible!', scoreDelta: 0 };
         }
@@ -70,6 +70,8 @@ export const reactionTimeChallenge = {
 
             const randomZone = zones[Math.floor(Math.random() * zones.length)];
 
+            const isDistractor = Math.random() < 0.2; // 20% Chance of distractor
+
             currentTarget = {
                 id: Math.random(),
                 x: randomZone.x,
@@ -77,10 +79,15 @@ export const reactionTimeChallenge = {
                 radius: 0.08,
                 label: randomZone.label,
                 shape: Math.floor(Math.random() * 3), // 0=circle, 1=square, 2=star
+                type: isDistractor ? 'distractor' : 'normal',
             };
 
             targetSpawnTime = currentTime;
-            newFeedback = `Touch the ${randomZone.label} target!`;
+            if (isDistractor) {
+                newFeedback = '⚠️ RED TARGET! DO NOT TOUCH!';
+            } else {
+                newFeedback = `Touch the ${randomZone.label} target!`;
+            }
         }
 
         // Check if hands are touching the current target
@@ -101,46 +108,63 @@ export const reactionTimeChallenge = {
 
             if (leftHandDist < HAND_RADIUS + currentTarget.radius ||
                 rightHandDist < HAND_RADIUS + currentTarget.radius) {
-                // Target hit!
-                const reactionTime = currentTime - targetSpawnTime;
-                reactionTimes.push(reactionTime);
-                targetsHit++;
 
-                // Calculate score based on reaction time
-                let points = 10;
-                if (reactionTime < 500) {
-                    points = 50; // Lightning fast!
-                    newFeedback = '⚡ Lightning Fast! +50';
-                } else if (reactionTime < 1000) {
-                    points = 30; // Very fast
-                    newFeedback = '🔥 Very Fast! +30';
-                } else if (reactionTime < 1500) {
-                    points = 20; // Fast
-                    newFeedback = '✨ Fast! +20';
+                if (currentTarget.type === 'distractor') {
+                    // Penalty for touching distractor
+                    scoreIncrement = -30;
+                    targetsHit = Math.max(0, targetsHit - 1);
+                    newFeedback = '❌ OUCH! DO NOT TOUCH RED!';
+
+                    currentTarget = null;
+                    targetSpawnTime = null;
+                    lastTargetEndTime = currentTime;
+                    nextTargetDelay += 500; // Penalize speed
                 } else {
-                    points = 10; // Good
-                    newFeedback = '👍 Good! +10';
+                    // Target hit!
+                    const reactionTime = currentTime - targetSpawnTime;
+                    reactionTimes.push(reactionTime);
+                    targetsHit++;
+
+                    // Calculate score based on reaction time
+                    let points = 10;
+                    if (reactionTime < 500) {
+                        points = 50; // Lightning fast!
+                        newFeedback = '⚡ Lightning Fast! +50';
+                    } else if (reactionTime < 1000) {
+                        points = 30; // Very fast
+                        newFeedback = '🔥 Very Fast! +30';
+                    } else if (reactionTime < 1500) {
+                        points = 20; // Fast
+                        newFeedback = '✨ Fast! +20';
+                    } else {
+                        points = 10; // Good
+                        newFeedback = '👍 Good! +10';
+                    }
+
+                    scoreIncrement = points;
+
+                    // Update best reaction time
+                    if (!bestReactionTime || reactionTime < bestReactionTime) {
+                        bestReactionTime = reactionTime;
+                    }
+
+                    // Clear current target
+                    currentTarget = null;
+                    targetSpawnTime = null;
+                    lastTargetEndTime = currentTime;
+
+                    // Decrease delay between targets as player improves (min 800ms)
+                    nextTargetDelay = Math.max(800, nextTargetDelay - 50);
                 }
-
-                scoreIncrement = points;
-
-                // Update best reaction time
-                if (!bestReactionTime || reactionTime < bestReactionTime) {
-                    bestReactionTime = reactionTime;
-                }
-
-                // Clear current target
-                currentTarget = null;
-                targetSpawnTime = null;
-                lastTargetEndTime = currentTime;
-
-                // Decrease delay between targets as player improves (min 800ms)
-                nextTargetDelay = Math.max(800, nextTargetDelay - 50);
             } else {
                 // Check if target has been on screen too long (timeout after 3 seconds)
                 const targetAge = currentTime - targetSpawnTime;
                 if (targetAge > 3000) {
-                    newFeedback = 'Too slow! Try again!';
+                    if (currentTarget.type === 'distractor') {
+                        newFeedback = 'Good avoid!';
+                    } else {
+                        newFeedback = 'Too slow! Try again!';
+                    }
                     currentTarget = null;
                     targetSpawnTime = null;
                     lastTargetEndTime = currentTime;

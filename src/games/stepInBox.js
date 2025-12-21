@@ -33,7 +33,7 @@ export const stepInBox = {
         // Shoulders not required for current detection
 
         // Visibility check
-        const minVisibility = 0.5;
+        const minVisibility = 0.4; // Matches lenient calibration
         if (leftHip.visibility < minVisibility || rightHip.visibility < minVisibility ||
             leftKnee.visibility < minVisibility || rightKnee.visibility < minVisibility) {
             return { ...state, feedback: 'Make sure your body is visible!', scoreDelta: 0 };

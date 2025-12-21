@@ -98,6 +98,47 @@ const GameRenderer = ({ gameId, renderDataRef }) => {
         }
       }
 
+      // Reaction Time Challenge
+      if (gameId === 'reaction_time_challenge') {
+        const target = data.currentTarget;
+        const pool = ensurePool('targets', target ? 1 : 0);
+
+        if (target) {
+          const el = pool[0];
+          const size = (target.radius || 0.08) * container.clientWidth * 2;
+          el.style.width = `${size}px`;
+          el.style.height = `${size}px`;
+          el.style.border = '4px solid white';
+          el.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
+
+          // Shape handling
+          if (target.shape === 1) {
+            el.style.borderRadius = '10%'; // Square
+            el.style.clipPath = 'none';
+          } else if (target.shape === 2) {
+            // Star
+            el.style.borderRadius = '0';
+            el.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+          } else {
+            el.style.borderRadius = '50%'; // Circle
+            el.style.clipPath = 'none';
+          }
+
+          // Color based on type
+          if (target.type === 'distractor') {
+            el.style.borderColor = '#ef4444'; // Red
+            el.style.background = 'rgba(239, 68, 68, 0.6)';
+          } else {
+            el.style.borderColor = '#ffffff';
+            el.style.background = 'rgba(34, 197, 94, 0.6)'; // Green
+          }
+
+          const x = target.x * container.clientWidth;
+          const y = target.y * container.clientHeight;
+          el.style.transform = `translate3d(${x - size / 2}px, ${y - size / 2}px, 0)`;
+        }
+      }
+
       rafRef.current = requestAnimationFrame(draw);
     }
 

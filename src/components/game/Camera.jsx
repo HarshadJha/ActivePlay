@@ -50,8 +50,7 @@ const Camera = ({ videoRef, resultsRef, start, stop }) => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       stop && stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [start, stop, videoRef, resultsRef]);
 
   return (
     <div className="relative w-full max-w-4xl mx-auto aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">

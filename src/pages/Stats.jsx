@@ -21,6 +21,8 @@ const Stats = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        if (!user) return;
+
         const fetchData = async () => {
             setIsLoading(true);
             try {
@@ -33,10 +35,22 @@ const Stats = () => {
                 setStats(statsResponse.stats);
 
                 // Backend returns {sessions, total, limit, offset}
-                setSessions(sessionsResponse.sessions || []);
+                const allSessions = sessionsResponse.sessions || [];
+
+                // Security Check: Filter sessions to ensure they belong to current user
+                // and log if we received data we shouldn't have
+                const mySessions = allSessions.filter(s => {
+                    if (s.userId && s.userId !== user.id) {
+                        console.error('SECURITY WARNING: Received session for another user!', s);
+                        return false;
+                    }
+                    return true;
+                });
+
+                setSessions(mySessions);
 
                 console.log('Stats loaded:', statsResponse.stats);
-                console.log('Sessions loaded:', sessionsResponse.sessions);
+                console.log('Sessions loaded:', mySessions);
             } catch (error) {
                 console.error('Failed to fetch stats:', error);
             } finally {
@@ -45,7 +59,7 @@ const Stats = () => {
         };
 
         fetchData();
-    }, []);
+    }, [user]);
 
     const formatDuration = (seconds) => {
         const hours = Math.floor(seconds / 3600);
